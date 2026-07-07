@@ -1,0 +1,31 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/models/__pycache__/
+backend/app/routers/__pycache__/
+backend/app/schemas/__pycache__/
+backend/app/services/__pycache__/
+backend/app/utils/__pycache__/
+backend/app/middleware/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+backend/.env
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# Database
+backend/memory_db/
+backend/doc_db/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
