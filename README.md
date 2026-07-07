@@ -70,16 +70,19 @@ TaskFlow/
 ![Dashboard](screenshots/dashboard.png)
 
 ### Dashboard with Organization
-!
+![Organization-Dashboard](screenshots/zohodashboard.png)
 
 ### Projects View
 ![Projects](screenshots/projects.png)
 
+### Task Detail View
+![Task Detail](screenshots/task-detail.png)
+
 ### Analytics View
 ![Analytics](screenshots/analytics.png)
 
-### Task Detail View
-![Task Detail](screenshots/task-detail.png)
+### Inbox View
+![Inbox](screenshots/inbox.png)
 
 ## Getting Started
 
