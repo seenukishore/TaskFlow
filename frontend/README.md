@@ -78,57 +78,33 @@
 ---
 
 ## Database Schema
-organizations
-└── organization_members (pivot)
-└── teams
-└── team_members (pivot)
-└── projects
-└── tasks
-└── task_assignments (pivot)
-└── comments
-└── attachments
-└── activity_logs
-└── notifications
-users
+
+```mermaid
+graph TD
+    A[Organizations] --> B[Organization Members]
+    B --> C[Teams]
+    C --> D[Team Members]
+    C --> E[Projects]
+    E --> F[Tasks]
+    F --> G[Task Assignments]
+    F --> H[Comments]
+    F --> I[Attachments]
+    F --> J[Activity Logs]
+    F --> K[Notifications]
+    A --> L[Users]
 
 ---
 
 ## API Structure
-/api/v1/
-├── auth/
-│   ├── POST /register
-│   ├── POST /login
-│   └── POST /refresh
-├── users/
-│   ├── GET /me
-│   └── PUT /me
-├── organizations/
-│   ├── POST /
-│   ├── GET /
-│   ├── GET /{org_id}
-│   ├── PUT /{org_id}
-│   ├── DELETE /{org_id}
-│   ├── POST /{org_id}/members
-│   └── POST /{org_id}/teams
-├── organizations/{org_id}/projects/
-│   ├── POST /
-│   ├── GET /
-│   ├── GET /{project_id}
-│   ├── PUT /{project_id}
-│   └── DELETE /{project_id}
-├── organizations/{org_id}/projects/{project_id}/tasks/
-│   ├── POST /
-│   ├── GET /
-│   ├── GET /{task_id}
-│   ├── PUT /{task_id}
-│   └── DELETE /{task_id}
-├── organizations/{org_id}/projects/{project_id}/tasks/{task_id}/comments/
-│   ├── POST /
-│   ├── GET /
-│   ├── PUT /{comment_id}
-│   └── DELETE /{comment_id}
-└── analytics/{org_id}
+Base URL: /api/v1/
 
+Auth: /auth/register, /auth/login, /auth/refresh
+Organizations: /organizations/, /organizations/{id}
+Projects: /organizations/{org_id}/projects/, /projects/{project_id}
+Tasks: /organizations/{org_id}/projects/{project_id}/tasks/
+Analytics: /analytics/{org_id}
+
+All list endpoints support: ?page=1&limit=20&sort=created_at
 ---
 
 ## Getting Started
@@ -212,21 +188,19 @@ TaskFlow/
 │   ├── app/
 │   │   ├── models/          # SQLAlchemy models
 │   │   ├── schemas/         # Pydantic schemas
-│   │   ├── routers/         # FastAPI routers
+│   │   ├── routers/         # API routes
 │   │   ├── services/        # Business logic
-│   │   ├── utils/           # JWT, dependencies
-│   │   └── database.py      # DB connection
-│   ├── migrations/          # Alembic migrations
-│   ├── main.py              # FastAPI app entry
-│   └── requirements.txt
-└── frontend/
-├── src/
-│   ├── components/      # Reusable components
-│   ├── pages/           # Page components
-│   ├── services/        # API service layer
-│   ├── store/           # Zustand stores
-│   └── hooks/           # Custom React hooks
-└── package.json
+│   │   └── database.py
+│   ├── alembic/             # Migrations
+│   └── main.py
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   └── store/
+│   └── package.json
+└── screenshots/
 ---
 
 ## AI Features
