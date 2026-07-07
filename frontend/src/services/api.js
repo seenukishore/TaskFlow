@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${BACKEND_URL}/api/v1`,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -30,7 +32,7 @@ api.interceptors.response.use(
 
       try {
         const refresh_token = localStorage.getItem('refresh_token')
-        const res = await axios.post('/api/v1/auth/refresh', { refresh_token })
+        const res = await axios.post(`${BACKEND_URL}/api/v1/auth/refresh`, { refresh_token })
 
         localStorage.setItem('access_token', res.data.access_token)
         localStorage.setItem('refresh_token', res.data.refresh_token)
