@@ -69,6 +69,9 @@ TaskFlow/
 ### Dashboard
 ![Dashboard](screenshots/dashboard.png)
 
+### Dashboard with Organization
+!
+
 ### Projects View
 ![Projects](screenshots/projects.png)
 

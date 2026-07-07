@@ -1,4 +1,4 @@
-# TaskFlow
+<!-- # TaskFlow
 
 TaskFlow is a multi-tenant project management platform inspired by Jira, Asana, and Monday.com. It combines a FastAPI backend, a React + Vite frontend, PostgreSQL storage, and AI-assisted task insights.
 
@@ -115,4 +115,4 @@ Once the backend is running, visit http://localhost:8000/docs
 
 Kishore Kumar S
 - GitHub: [@seenukishore](https://github.com/seenukishore)
-- LinkedIn: [linkedin.com/in/kishore-kumar-seenu](https://www.linkedin.com/in/kishore-kumar-seenu/)
+- LinkedIn: [linkedin.com/in/kishore-kumar-seenu](https://www.linkedin.com/in/kishore-kumar-seenu/) -->
