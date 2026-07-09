@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { tasksService } from '../../services/tasks'
+import api from '../../services/api'
 import useAppStore from '../../store/appStore'
 import {
   X, AlertTriangle, Clock, CheckCircle,
-  MessageSquare, Send, Zap, User
+  Send, Zap, User, Paperclip, Trash2, Download
 } from 'lucide-react'
 
 export default function TaskDetailModal({ task, onClose, onUpdate }) {
@@ -14,15 +15,55 @@ export default function TaskDetailModal({ task, onClose, onUpdate }) {
   const [priority, setPriority] = useState(task?.priority || 'medium')
   const [loading, setLoading] = useState(false)
   const [commentLoading, setCommentLoading] = useState(false)
+  const [attachments, setAttachments] = useState([])
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
-    if (task) fetchComments()
+    if (task) {
+      fetchComments()
+      fetchAttachments()
+    }
   }, [task])
 
   const fetchComments = async () => {
     try {
       const data = await tasksService.getComments(currentOrg.id, task.project_id, task.id)
       setComments(data.data || [])
+    } catch (err) { console.error(err) }
+  }
+
+  const fetchAttachments = async () => {
+    try {
+      const data = await api.get(
+        `/organizations/${currentOrg.id}/projects/${task.project_id}/tasks/${task.id}/attachments/`
+      )
+      setAttachments(data.data?.data || [])
+    } catch (err) { console.error(err) }
+  }
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    try {
+      setUploading(true)
+      const formData = new FormData()
+      formData.append('file', file)
+      await api.post(
+        `/organizations/${currentOrg.id}/projects/${task.project_id}/tasks/${task.id}/attachments/`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      )
+      fetchAttachments()
+    } catch (err) { console.error(err) }
+    finally { setUploading(false) }
+  }
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    try {
+      await api.delete(
+        `/organizations/${currentOrg.id}/projects/${task.project_id}/tasks/${task.id}/attachments/${attachmentId}`
+      )
+      fetchAttachments()
     } catch (err) { console.error(err) }
   }
 
@@ -157,6 +198,56 @@ export default function TaskDetailModal({ task, onClose, onUpdate }) {
                 </div>
               </div>
             )}
+
+            {/* Attachments */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ fontSize: 13, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Attachments ({attachments.length})
+                </h3>
+                <label style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: 'rgba(124,58,237,0.15)',
+                  border: '1px solid rgba(124,58,237,0.3)',
+                  borderRadius: 6, padding: '6px 12px',
+                  color: '#a78bfa', fontSize: 12, cursor: 'pointer'
+                }}>
+                  <Paperclip size={12} />
+                  {uploading ? 'Uploading...' : 'Add File'}
+                  <input type="file" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading} />
+                </label>
+              </div>
+              {attachments.length === 0 ? (
+                <p style={{ color: '#4b5563', fontSize: 13 }}>No attachments yet.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {attachments.map(att => (
+                    <div key={att.id} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 14px',
+                      background: 'rgba(255,255,255,0.03)',
+                      borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)'
+                    }}>
+                      <Paperclip size={14} color="#6b7280" />
+                      <div style={{ flex: 1 }}>
+                        <p style={{ color: 'white', fontSize: 13 }}>{att.file_name}</p>
+                        <p style={{ color: '#6b7280', fontSize: 11 }}>
+                          {att.file_size ? `${(att.file_size / 1024).toFixed(1)} KB` : ''}
+                        </p>
+                      </div>
+                      <a href={att.s3_url} target="_blank" rel="noreferrer" style={{ color: '#6b7280', cursor: 'pointer' }}>
+                        <Download size={14} />
+                      </a>
+                      <button onClick={() => handleDeleteAttachment(att.id)} style={{
+                        background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444'
+                      }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Comments */}
             <div>

@@ -12,6 +12,7 @@ from app.routers.projects import router as projects_router
 from app.routers.tasks import router as tasks_router
 from app.routers.comments import router as comments_router
 from app.routers.analytics import router as analytics_router
+from app.routers.attachments import router as attachments_router
 
 app = FastAPI(
     title="TaskFlow API",
@@ -36,6 +37,7 @@ app.include_router(projects_router)
 app.include_router(tasks_router)
 app.include_router(comments_router)
 app.include_router(analytics_router)
+app.include_router(attachments_router)
 
 @app.get("/")
 def root():
