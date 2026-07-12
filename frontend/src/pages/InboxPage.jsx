@@ -1,101 +1,23 @@
 import { useState, useEffect } from 'react'
-import { Bell, CheckCheck, Info, AlertTriangle, CheckCircle, Zap } from 'lucide-react'
-import { tasksService } from '../services/tasks'
-import { projectsService } from '../services/projects'
-import useAppStore from '../store/appStore'
+import { Bell, CheckCheck, Info, AlertTriangle, CheckCircle, Zap, Trash2 } from 'lucide-react'
+import { notificationsService } from '../services/notifications'
 
 export default function InboxPage() {
-  const { currentOrg } = useAppStore()
   const [filter, setFilter] = useState('all')
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    if (currentOrg) fetchRealNotifications()
-  }, [currentOrg])
+    fetchNotifications()
+  }, [])
 
-  const fetchRealNotifications = async () => {
+  const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const projectsData = await projectsService.getProjects(currentOrg.id)
-      const projects = projectsData.data || []
-
-      let realNotifications = []
-
-      for (const proj of projects) {
-        const tasksData = await tasksService.getTasks(currentOrg.id, proj.id, { limit: 50 })
-        const tasks = tasksData.data || []
-
-        tasks.forEach(task => {
-          // Task created notification
-          realNotifications.push({
-            id: `task-created-${task.id}`,
-            type: 'task_assigned',
-            read: false,
-            title: 'Task created',
-            message: `"${task.title}" was created in ${proj.name}`,
-            time: new Date(task.created_at).toLocaleDateString(),
-            icon: 'task',
-            color: '#7c3aed'
-          })
-
-          // Critical task notification
-          if (task.priority === 'critical') {
-            realNotifications.push({
-              id: `task-critical-${task.id}`,
-              type: 'deadline',
-              read: false,
-              title: 'Critical priority task',
-              message: `"${task.title}" is marked as CRITICAL priority. Immediate attention required!`,
-              time: new Date(task.created_at).toLocaleDateString(),
-              icon: 'deadline',
-              color: '#ef4444'
-            })
-          }
-
-          // AI summary notification
-          if (task.ai_summary) {
-            realNotifications.push({
-              id: `task-ai-${task.id}`,
-              type: 'comment',
-              read: true,
-              title: 'AI analyzed your task',
-              message: `AI Summary for "${task.title}": ${task.ai_summary}`,
-              time: new Date(task.created_at).toLocaleDateString(),
-              icon: 'comment',
-              color: '#3b82f6'
-            })
-          }
-
-          // Done task notification
-          if (task.status === 'done') {
-            realNotifications.push({
-              id: `task-done-${task.id}`,
-              type: 'task_completed',
-              read: true,
-              title: 'Task completed',
-              message: `"${task.title}" has been marked as Done in ${proj.name}`,
-              time: new Date(task.updated_at).toLocaleDateString(),
-              icon: 'done',
-              color: '#10b981'
-            })
-          }
-        })
-
-        // Project notification
-        realNotifications.push({
-          id: `project-${proj.id}`,
-          type: 'project_update',
-          read: true,
-          title: 'Project created',
-          message: `Project "${proj.name}" is ${proj.status} with ${proj.health} health`,
-          time: new Date(proj.created_at).toLocaleDateString(),
-          icon: 'project',
-          color: '#10b981'
-        })
-      }
-
-      setNotifications(realNotifications)
+      const data = await notificationsService.getNotifications({ limit: 50 })
+      setNotifications(data.data || [])
+      setUnreadCount(data.unread_count || 0)
     } catch (err) {
       console.error(err)
     } finally {
@@ -103,39 +25,47 @@ export default function InboxPage() {
     }
   }
 
-  const getIcon = (type, color) => {
+  const handleMarkRead = async (id) => {
+    try {
+      await notificationsService.markAsRead(id)
+      setNotifications(prev => prev.map(n =>
+        n.id === id ? { ...n, is_read: true } : n
+      ))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    } catch (err) { console.error(err) }
+  }
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationsService.markAllRead()
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+      setUnreadCount(0)
+    } catch (err) { console.error(err) }
+  }
+
+  const handleDelete = async (id) => {
+    try {
+      await notificationsService.deleteNotification(id)
+      setNotifications(prev => prev.filter(n => n.id !== id))
+    } catch (err) { console.error(err) }
+  }
+
+  const getIcon = (type) => {
     const icons = {
-      task: <Zap size={16} color={color} />,
-      comment: <Bell size={16} color={color} />,
-      project: <CheckCircle size={16} color={color} />,
-      mention: <Info size={16} color={color} />,
-      deadline: <AlertTriangle size={16} color={color} />,
-      done: <CheckCheck size={16} color={color} />,
+      task_created: { icon: <Zap size={16} color="#7c3aed" />, color: '#7c3aed' },
+      task_updated: { icon: <Info size={16} color="#3b82f6" />, color: '#3b82f6' },
+      task_completed: { icon: <CheckCircle size={16} color="#10b981" />, color: '#10b981' },
+      comment_added: { icon: <Bell size={16} color="#f59e0b" />, color: '#f59e0b' },
+      deadline: { icon: <AlertTriangle size={16} color="#ef4444" />, color: '#ef4444' },
     }
-    return icons[type] || <Bell size={16} color={color} />
-  }
-
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-  }
-
-  const markRead = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    return icons[type] || { icon: <Bell size={16} color="#6b7280" />, color: '#6b7280' }
   }
 
   const filtered = filter === 'all'
     ? notifications
     : filter === 'unread'
-      ? notifications.filter(n => !n.read)
+      ? notifications.filter(n => !n.is_read)
       : notifications.filter(n => n.type === filter)
-
-  const unreadCount = notifications.filter(n => !n.read).length
-
-  if (!currentOrg) return (
-    <div style={{ padding: 32, color: '#6b7280', textAlign: 'center', marginTop: 80 }}>
-      Select an organization first from Dashboard
-    </div>
-  )
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -154,7 +84,7 @@ export default function InboxPage() {
           </p>
         </div>
         {unreadCount > 0 && (
-          <button onClick={markAllRead} style={{
+          <button onClick={handleMarkAllRead} style={{
             display: 'flex', alignItems: 'center', gap: 8,
             background: 'rgba(124,58,237,0.15)',
             border: '1px solid rgba(124,58,237,0.3)',
@@ -171,9 +101,9 @@ export default function InboxPage() {
         {[
           { key: 'all', label: 'All' },
           { key: 'unread', label: `Unread (${unreadCount})` },
-          { key: 'task_assigned', label: 'Tasks' },
-          { key: 'comment', label: 'AI Analysis' },
-          { key: 'deadline', label: 'Critical' },
+          { key: 'task_created', label: 'Tasks' },
+          { key: 'comment_added', label: 'Comments' },
+          { key: 'task_completed', label: 'Completed' },
         ].map(tab => (
           <button key={tab.key} onClick={() => setFilter(tab.key)} style={{
             padding: '8px 16px', borderRadius: 8,
@@ -195,51 +125,75 @@ export default function InboxPage() {
         {filtered.length === 0 ? (
           <div style={{ padding: '48px', textAlign: 'center' }}>
             <Bell size={40} color="#374151" style={{ marginBottom: 16 }} />
-            <p style={{ color: '#6b7280', fontSize: 14 }}>No notifications</p>
+            <p style={{ color: '#6b7280', fontSize: 14 }}>No notifications yet</p>
+            <p style={{ color: '#4b5563', fontSize: 12, marginTop: 8 }}>
+              Create tasks and add comments to see notifications here!
+            </p>
           </div>
         ) : (
-          filtered.map((notif, i) => (
-            <div
-              key={notif.id}
-              onClick={() => markRead(notif.id)}
-              style={{
-                display: 'flex', gap: 16, padding: '20px 24px',
-                borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                background: !notif.read ? 'rgba(124,58,237,0.05)' : 'transparent',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{
-                width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                background: `${notif.color}20`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                {getIcon(notif.icon, notif.color)}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <p style={{
-                    fontSize: 14, fontWeight: notif.read ? 400 : 600,
-                    color: notif.read ? '#d1d5db' : 'white'
-                  }}>
-                    {notif.title}
-                  </p>
-                  <span style={{ fontSize: 12, color: '#4b5563', flexShrink: 0, marginLeft: 16 }}>
-                    {notif.time}
-                  </span>
-                </div>
-                <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>
-                  {notif.message}
-                </p>
-              </div>
-              {!notif.read && (
+          filtered.map((notif, i) => {
+            const { icon, color } = getIcon(notif.type)
+            return (
+              <div
+                key={notif.id}
+                onClick={() => !notif.is_read && handleMarkRead(notif.id)}
+                style={{
+                  display: 'flex', gap: 16, padding: '20px 24px',
+                  borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  background: !notif.is_read ? 'rgba(124,58,237,0.05)' : 'transparent',
+                  cursor: !notif.is_read ? 'pointer' : 'default',
+                  transition: 'background 0.2s'
+                }}
+              >
+                {/* Icon */}
                 <div style={{
-                  width: 8, height: 8, borderRadius: '50%',
-                  background: '#7c3aed', flexShrink: 0, marginTop: 6
-                }} />
-              )}
-            </div>
-          ))
+                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                  background: `${color}20`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  {icon}
+                </div>
+
+                {/* Content */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <p style={{
+                      fontSize: 14, fontWeight: notif.is_read ? 400 : 600,
+                      color: notif.is_read ? '#d1d5db' : 'white'
+                    }}>
+                      {notif.title}
+                    </p>
+                    <span style={{ fontSize: 12, color: '#4b5563', flexShrink: 0, marginLeft: 16 }}>
+                      {new Date(notif.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>
+                    {notif.message}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {!notif.is_read && (
+                    <div style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: '#7c3aed', flexShrink: 0
+                    }} />
+                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(notif.id) }}
+                    style={{
+                      background: 'none', border: 'none',
+                      cursor: 'pointer', color: '#4b5563',
+                      padding: 4, borderRadius: 4
+                    }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            )
+          })
         )}
       </div>
     </div>

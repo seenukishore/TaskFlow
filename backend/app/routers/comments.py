@@ -4,6 +4,8 @@ from app.database import get_db
 from app.schemas.comment import CommentCreate, CommentUpdate, CommentResponse, CommentListResponse
 from app.models.comment import Comment
 from app.models.activity_log import ActivityLog
+from app.models.task import Task
+from app.services.notification import notify_comment_added
 from app.utils.dependencies import get_current_user
 from app.models.user import User
 from fastapi import HTTPException, status
@@ -47,6 +49,17 @@ def create_comment(
     db.add(log)
     db.commit()
     db.refresh(comment)
+
+    # Notify task creator
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if task:
+        notify_comment_added(
+            db, task,
+            current_user.full_name,
+            org_id,
+            request.content
+        )
+
     return comment
 
 @router.get("/", response_model=CommentListResponse)

@@ -4,6 +4,7 @@ from app.models.task import Task, TaskAssignment, TaskStatus, TaskPriority
 from app.models.activity_log import ActivityLog
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.ai import analyze_task_priority, generate_task_summary
+from app.services.notification import notify_task_created, notify_task_updated, notify_task_completed
 import uuid
 from datetime import datetime
 
@@ -61,6 +62,7 @@ def create_task(db: Session, project_id: str, organization_id: str, user_id: str
     db.add(log)
     db.commit()
     db.refresh(task)
+    notify_task_created(db, task, str(user_id), organization_id)
     return task
 
 def get_tasks(db: Session, project_id: str, organization_id: str, page: int = 1, limit: int = 20, status: str = None, priority: str = None) -> dict:
@@ -114,6 +116,12 @@ def update_task(db: Session, task_id: str, organization_id: str, user_id: str, r
         description=f"Task '{task.title}' updated"
     )
     db.add(log)
+    
+    if request.status == TaskStatus.DONE and old_status != TaskStatus.DONE:
+        notify_task_completed(db, task, organization_id)
+    else:
+        notify_task_updated(db, task, str(user_id), organization_id, update_data)
+    
     db.commit()
     db.refresh(task)
     return task
