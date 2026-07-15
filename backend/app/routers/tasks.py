@@ -34,10 +34,13 @@ def list_tasks(
     limit: int = Query(20, ge=1, le=100),
     status: str = Query(None),
     priority: str = Query(None),
+    search: str = Query(None),
+    sort: str = Query("created_at"),
+    order: str = Query("desc"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    return get_tasks(db, project_id, org_id, page, limit, status, priority)
+    return get_tasks(db, project_id, org_id, page, limit, status, priority, search, sort, order)
 
 @router.get("/{task_id}", response_model=TaskResponse)
 def get_task_route(

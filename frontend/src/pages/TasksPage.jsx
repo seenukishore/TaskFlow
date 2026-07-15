@@ -126,6 +126,9 @@ export default function TasksPage() {
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium', status: 'backlog' })
   const [selectedTask, setSelectedTask] = useState(null)
   const [activeTask, setActiveTask] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [filterPriority, setFilterPriority] = useState('')
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -146,7 +149,7 @@ export default function TasksPage() {
 
   useEffect(() => {
     if (selectedProject) fetchTasks()
-  }, [selectedProject])
+  }, [selectedProject, searchQuery, filterStatus, filterPriority])
 
   const fetchProjects = async () => {
     try {
@@ -159,7 +162,11 @@ export default function TasksPage() {
   const fetchTasks = async () => {
     try {
       setLoading(true)
-      const data = await tasksService.getTasks(currentOrg.id, selectedProject.id)
+      const params = {}
+      if (searchQuery) params.search = searchQuery
+      if (filterStatus) params.status = filterStatus
+      if (filterPriority) params.priority = filterPriority
+      const data = await tasksService.getTasks(currentOrg.id, selectedProject.id, params)
       setTasks(data.data || [])
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -239,6 +246,60 @@ export default function TasksPage() {
         }}>
           <Plus size={16} /> New Issue
         </button>
+      </div>
+
+      {/* Search + Filter Bar */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 8, padding: '8px 14px', flex: 1
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            placeholder="Search tasks..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{
+              background: 'none', border: 'none', outline: 'none',
+              color: 'white', fontSize: 13, width: '100%'
+            }}
+          />
+        </div>
+        <select
+          value={filterStatus}
+          onChange={e => setFilterStatus(e.target.value)}
+          style={{
+            padding: '8px 14px', background: '#1a1a2e',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 8, color: 'white', fontSize: 13, outline: 'none'
+          }}
+        >
+          <option value="">All Status</option>
+          <option value="backlog">Backlog</option>
+          <option value="todo">Todo</option>
+          <option value="in_progress">In Progress</option>
+          <option value="in_review">In Review</option>
+          <option value="done">Done</option>
+        </select>
+        <select
+          value={filterPriority}
+          onChange={e => setFilterPriority(e.target.value)}
+          style={{
+            padding: '8px 14px', background: '#1a1a2e',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 8, color: 'white', fontSize: 13, outline: 'none'
+          }}
+        >
+          <option value="">All Priority</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
       </div>
 
       {/* Project Selector */}

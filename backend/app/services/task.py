@@ -65,7 +65,7 @@ def create_task(db: Session, project_id: str, organization_id: str, user_id: str
     notify_task_created(db, task, str(user_id), organization_id)
     return task
 
-def get_tasks(db: Session, project_id: str, organization_id: str, page: int = 1, limit: int = 20, status: str = None, priority: str = None) -> dict:
+def get_tasks(db: Session, project_id: str, organization_id: str, page: int = 1, limit: int = 20, status: str = None, priority: str = None, search: str = None, sort: str = "created_at", order: str = "desc") -> dict:
     query = db.query(Task).filter(
         Task.project_id == project_id,
         Task.organization_id == organization_id,
@@ -76,6 +76,18 @@ def get_tasks(db: Session, project_id: str, organization_id: str, page: int = 1,
         query = query.filter(Task.status == status)
     if priority:
         query = query.filter(Task.priority == priority)
+    if search:
+        query = query.filter(
+            Task.title.ilike(f"%{search}%") |
+            Task.description.ilike(f"%{search}%")
+        )
+
+    # Sorting
+    sort_column = getattr(Task, sort, Task.created_at)
+    if order == "desc":
+        query = query.order_by(sort_column.desc())
+    else:
+        query = query.order_by(sort_column.asc())
 
     total = query.count()
     tasks = query.offset((page - 1) * limit).limit(limit).all()
