@@ -15,9 +15,15 @@ export const authService = {
     return res.data
   },
 
-  logout: () => {
-    localStorage.clear()
-    window.location.href = '/login'
+  logout: async () => {
+    try {
+      await api.post('/auth/logout')
+    } catch (err) {
+      console.error('Logout error:', err)
+    } finally {
+      localStorage.clear()
+      window.location.href = '/login'
+    }
   },
 
   getMe: async () => {

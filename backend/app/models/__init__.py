@@ -6,3 +6,4 @@ from app.models.comment import Comment
 from app.models.attachment import Attachment
 from app.models.activity_log import ActivityLog
 from app.models.notification import Notification
+from app.models.token_blacklist import TokenBlacklist

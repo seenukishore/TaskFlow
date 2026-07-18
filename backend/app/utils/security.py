@@ -20,9 +20,6 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password[:72], hashed_password)
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     if expires_delta:
@@ -44,3 +41,22 @@ def decode_token(token: str) -> Optional[dict]:
         return payload
     except JWTError:
         return None
+
+def is_token_blacklisted(token: str, db) -> bool:
+    from app.models.token_blacklist import TokenBlacklist
+    blacklisted = db.query(TokenBlacklist).filter(
+        TokenBlacklist.token == token
+    ).first()
+    return blacklisted is not None
+
+def blacklist_token(token: str, db) -> None:
+    from app.models.token_blacklist import TokenBlacklist
+    payload = decode_token(token)
+    if payload:
+        expires_at = datetime.fromtimestamp(payload.get("exp", 0))
+        blacklisted = TokenBlacklist(
+            token=token,
+            expires_at=expires_at
+        )
+        db.add(blacklisted)
+        db.commit()
