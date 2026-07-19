@@ -2,11 +2,26 @@
 
 TaskFlow is a modern, multi-tenant project management platform designed for teams that need structure, visibility, and intelligent automation. Built with FastAPI, React, PostgreSQL, and AI-powered task insights, it brings together project planning, team collaboration, analytics, and streamlined workflows in one solution.
 
+
+![TaskFlow Dashboard](https://img.shields.io/badge/Status-Live-green?style=for-the-badge)
+![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-black?style=for-the-badge&logo=vercel)
+![API](https://img.shields.io/badge/API-Render-46E3B7?style=for-the-badge&logo=render)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
+
+---
+
+## 🌐 Live Demo
+
+- **Frontend:** https://task-flow-sigma-three.vercel.app
+- **API Docs:** https://taskflow-3szu.onrender.com/docs
+
+> **Demo Account:**
+> - Email: `kishore@taskflow.com`
+> - Password: `Admin@123`
 
 ---
 
