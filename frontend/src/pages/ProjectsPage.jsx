@@ -9,16 +9,20 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [newProject, setNewProject] = useState({ name: '', description: '' })
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const limit = 10
 
   useEffect(() => {
     if (currentOrg) fetchProjects()
-  }, [currentOrg])
+  }, [currentOrg, page])
 
   const fetchProjects = async () => {
     try {
       setLoading(true)
-      const data = await projectsService.getProjects(currentOrg.id)
+      const data = await projectsService.getProjects(currentOrg.id, { page, limit })
       setProjects(data.data || [])
+      setTotal(data.total || 0)
     } catch (err) {
       console.error(err)
     } finally {
@@ -251,6 +255,52 @@ export default function ProjectsPage() {
               </span>
             </div>
           ))}
+          
+          {/* Pagination */}
+          {projects.length > 0 && (
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.04)'
+            }}>
+              <span style={{ fontSize: 13, color: '#6b7280' }}>
+                Showing {projects.length} of {total} projects
+              </span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  style={{
+                    padding: '6px 14px', borderRadius: 8,
+                    background: page === 1 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    color: page === 1 ? '#4b5563' : '#9ca3af',
+                    fontSize: 13, cursor: page === 1 ? 'not-allowed' : 'pointer'
+                  }}>
+                  Previous
+                </button>
+                <span style={{
+                  padding: '6px 14px', borderRadius: 8,
+                  background: 'rgba(124,58,237,0.2)',
+                  border: '1px solid rgba(124,58,237,0.3)',
+                  color: '#a78bfa', fontSize: 13
+                }}>
+                  {page}
+                </span>
+                <button
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={projects.length < limit}
+                  style={{
+                    padding: '6px 14px', borderRadius: 8,
+                    background: projects.length < limit ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    color: projects.length < limit ? '#4b5563' : '#9ca3af',
+                    fontSize: 13, cursor: projects.length < limit ? 'not-allowed' : 'pointer'
+                  }}>
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
