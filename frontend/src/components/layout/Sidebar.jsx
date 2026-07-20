@@ -4,7 +4,7 @@ import useAppStore from '../../store/appStore'
 import {
   CheckSquare, Search, Inbox, ListTodo,
   Folder, Users, BarChart2, Settings,
-  Plus, HelpCircle, User, LogOut
+  Plus, HelpCircle, User, LogOut, Activity
 } from 'lucide-react'
 
 export default function Sidebar() {
@@ -19,6 +19,7 @@ export default function Sidebar() {
     { icon: <Folder size={18} />, label: 'Projects', path: '/projects' },
     { icon: <Users size={18} />, label: 'Team', path: '/team' },
     { icon: <BarChart2 size={18} />, label: 'Analytics', path: '/analytics' },
+    { icon: <Activity size={18} />, label: 'Activity', path: '/activity' },
     { icon: <Settings size={18} />, label: 'Settings', path: '/settings' },
   ]
 

@@ -11,6 +11,7 @@ import AnalyticsPage from './pages/AnalyticsPage'
 import TeamPage from './pages/TeamPage'
 import InboxPage from './pages/InboxPage'
 import SettingsPage from './pages/SettingsPage'
+import ActivityLogsPage from './pages/ActivityLogsPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function PrivateRoute({ children }) {
@@ -64,6 +65,9 @@ export default function App() {
         } />
         <Route path="/settings" element={
           <PrivateRoute><Layout><SettingsPage /></Layout></PrivateRoute>
+        } />
+        <Route path="/activity" element={
+          <PrivateRoute><Layout><ActivityLogsPage /></Layout></PrivateRoute>
         } />
 
         {/* Redirects */}
