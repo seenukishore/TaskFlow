@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { projectsService } from '../services/projects'
+import { projectsService, organizationsService } from '../services/projects'
 import useAppStore from '../store/appStore'
 import { Plus, Folder, Clock, CheckCircle, AlertTriangle } from 'lucide-react'
 
@@ -8,13 +8,17 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
-  const [newProject, setNewProject] = useState({ name: '', description: '' })
+  const [newProject, setNewProject] = useState({ name: '', description: '', team_id: '' })
+  const [teams, setTeams] = useState([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const limit = 10
 
   useEffect(() => {
-    if (currentOrg) fetchProjects()
+    if (currentOrg) {
+      fetchProjects()
+      fetchTeams()
+    }
   }, [currentOrg, page])
 
   const fetchProjects = async () => {
@@ -30,11 +34,25 @@ export default function ProjectsPage() {
     }
   }
 
+  const fetchTeams = async () => {
+    try {
+      const data = await organizationsService.getTeams(currentOrg.id)
+      setTeams(data || [])
+    } catch (err) { 
+      console.error(err) 
+    }
+  }
+
   const handleCreate = async (e) => {
     e.preventDefault()
     try {
-      await projectsService.createProject(currentOrg.id, newProject)
-      setNewProject({ name: '', description: '' })
+      const projectData = {
+        name: newProject.name,
+        description: newProject.description,
+        team_id: newProject.team_id || null
+      }
+      await projectsService.createProject(currentOrg.id, projectData)
+      setNewProject({ name: '', description: '', team_id: '' })
       setShowCreate(false)
       fetchProjects()
     } catch (err) {
@@ -158,6 +176,29 @@ export default function ProjectsPage() {
                     outline: 'none', boxSizing: 'border-box', resize: 'none'
                   }}
                 />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, color: '#9ca3af', marginBottom: 6, display: 'block' }}>
+                  Assign to Team (Optional)
+                </label>
+                <select
+                  value={newProject.team_id}
+                  onChange={e => setNewProject({ ...newProject, team_id: e.target.value })}
+                  style={{
+                    width: '100%', padding: '10px 14px',
+                    background: '#1a1a2e',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 8, color: 'white', fontSize: 14,
+                    outline: 'none'
+                  }}
+                >
+                  <option value="">No Team</option>
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
                 <button type="button" onClick={() => setShowCreate(false)} style={{

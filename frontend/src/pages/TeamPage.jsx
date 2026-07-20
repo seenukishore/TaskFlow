@@ -45,6 +45,15 @@ export default function TeamPage() {
     }
   }
 
+  const handleAddMember = async (teamId, userId) => {
+    try {
+      await organizationsService.addMember(currentOrg.id, { user_id: userId, role: 'team_member' })
+      fetchData()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const stats = [
     { label: 'TOTAL MEMBERS', value: analytics?.members?.total || 1, change: 'In your org', icon: <Users size={20} />, color: '#7c3aed' },
     { 
@@ -235,10 +244,29 @@ export default function TeamPage() {
                   </div>
                 </div>
                 {team.description && (
-                  <p style={{ color: '#6b7280', fontSize: 12 }}>
+                  <p style={{ color: '#6b7280', fontSize: 12, marginBottom: 8 }}>
                     {team.description}
                   </p>
                 )}
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  marginTop: 8 
+                }}>
+                  <span style={{ fontSize: 11, color: '#4b5563' }}>
+                    Created {new Date(team.created_at).toLocaleDateString()}
+                  </span>
+                  <span style={{
+                    fontSize: 11, 
+                    color: '#a78bfa',
+                    background: 'rgba(124,58,237,0.15)',
+                    padding: '2px 8px', 
+                    borderRadius: 10
+                  }}>
+                    {team.organization_id ? 'Active' : ''}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
