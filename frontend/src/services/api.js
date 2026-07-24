@@ -1,15 +1,16 @@
 import axios from 'axios'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
+const BACKEND_URL = 'https://taskflow-3szu.onrender.com'
 
 const api = axios.create({
   baseURL: `${BACKEND_URL}/api/v1`,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true  // Important - cookies send pannuvom
 })
 
-// Request interceptor - add token
+// Request interceptor - still send Bearer token as fallback
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token')
@@ -31,13 +32,19 @@ api.interceptors.response.use(
       original._retry = true
 
       try {
-        const refresh_token = localStorage.getItem('refresh_token')
-        const res = await axios.post(`${BACKEND_URL}/api/v1/auth/refresh`, { refresh_token })
+        // Try cookie-based refresh
+        const res = await axios.post(
+          `${BACKEND_URL}/api/v1/auth/refresh`,
+          {},
+          { withCredentials: true }
+        )
 
-        localStorage.setItem('access_token', res.data.access_token)
-        localStorage.setItem('refresh_token', res.data.refresh_token)
+        if (res.data.access_token) {
+          localStorage.setItem('access_token', res.data.access_token)
+          localStorage.setItem('refresh_token', res.data.refresh_token)
+          original.headers.Authorization = `Bearer ${res.data.access_token}`
+        }
 
-        original.headers.Authorization = `Bearer ${res.data.access_token}`
         return api(original)
       } catch {
         localStorage.clear()
